@@ -1,0 +1,2008 @@
+[1mdiff --git a/Makefile b/Makefile[m
+[1mindex 09d790c..38efe68 100644[m
+[1m--- a/Makefile[m
+[1m+++ b/Makefile[m
+[36m@@ -181,6 +181,8 @@[m [mUPROGS=\[m
+ 	_usertests\[m
+ 	_wc\[m
+ 	_zombie\[m
+[32m+[m	[32m_hello\[m
+[32m+[m	[32m_lab1_test\[m
+ [m
+ fs.img: mkfs README $(UPROGS)[m
+ 	./mkfs fs.img README $(UPROGS)[m
+[1mdiff --git a/cat.c b/cat.c[m
+[1mindex 5ddc820..ed1987d 100644[m
+[1m--- a/cat.c[m
+[1m+++ b/cat.c[m
+[36m@@ -12,12 +12,12 @@[m [mcat(int fd)[m
+   while((n = read(fd, buf, sizeof(buf))) > 0) {[m
+     if (write(1, buf, n) != n) {[m
+       printf(1, "cat: write error\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+   if(n < 0){[m
+     printf(1, "cat: read error\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ }[m
+ [m
+[36m@@ -28,16 +28,16 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   if(argc <= 1){[m
+     cat(0);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(i = 1; i < argc; i++){[m
+     if((fd = open(argv[i], 0)) < 0){[m
+       printf(1, "cat: cannot open %s\n", argv[i]);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     cat(fd);[m
+     close(fd);[m
+   }[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/defs.h b/defs.h[m
+[1mindex 82fb982..4804fd6 100644[m
+[1m--- a/defs.h[m
+[1m+++ b/defs.h[m
+[36m@@ -104,7 +104,7 @@[m [mint             pipewrite(struct pipe*, char*, int);[m
+ //PAGEBREAK: 16[m
+ // proc.c[m
+ int             cpuid(void);[m
+[31m-void            exit(void);[m
+[32m+[m[32mvoid            exit(int);[m
+ int             fork(void);[m
+ int             growproc(int);[m
+ int             kill(int);[m
+[36m@@ -117,7 +117,8 @@[m [mvoid            sched(void);[m
+ void            setproc(struct proc*);[m
+ void            sleep(void*, struct spinlock*);[m
+ void            userinit(void);[m
+[31m-int             wait(void);[m
+[32m+[m[32mint             wait(int*);[m
+[32m+[m[32mint		waitpid(int, int*, int);[m
+ void            wakeup(void*);[m
+ void            yield(void);[m
+ [m
+[1mdiff --git a/echo.c b/echo.c[m
+[1mindex 806dee0..eed68a0 100644[m
+[1m--- a/echo.c[m
+[1m+++ b/echo.c[m
+[36m@@ -9,5 +9,5 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   for(i = 1; i < argc; i++)[m
+     printf(1, "%s%s", argv[i], i+1 < argc ? " " : "\n");[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/forktest.c b/forktest.c[m
+[1mindex 8bc984d..4cbcb17 100644[m
+[1m--- a/forktest.c[m
+[1m+++ b/forktest.c[m
+[36m@@ -25,24 +25,24 @@[m [mforktest(void)[m
+     if(pid < 0)[m
+       break;[m
+     if(pid == 0)[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+   }[m
+ [m
+   if(n == N){[m
+     printf(1, "fork claimed to work N times!\n", N);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(; n > 0; n--){[m
+[31m-    if(wait() < 0){[m
+[32m+[m[32m    if(wait(0) < 0){[m
+       printf(1, "wait stopped early\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+[31m-  if(wait() != -1){[m
+[32m+[m[32m  if(wait(0) != -1){[m
+     printf(1, "wait got too many\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   printf(1, "fork test OK\n");[m
+[36m@@ -52,5 +52,5 @@[m [mint[m
+ main(void)[m
+ {[m
+   forktest();[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/grep.c b/grep.c[m
+[1mindex adc4835..1aa1081 100644[m
+[1m--- a/grep.c[m
+[1m+++ b/grep.c[m
+[36m@@ -43,24 +43,24 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   if(argc <= 1){[m
+     printf(2, "usage: grep pattern [file ...]\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   pattern = argv[1];[m
+ [m
+   if(argc <= 2){[m
+     grep(pattern, 0);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(i = 2; i < argc; i++){[m
+     if((fd = open(argv[i], 0)) < 0){[m
+       printf(1, "grep: cannot open %s\n", argv[i]);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     grep(pattern, fd);[m
+     close(fd);[m
+   }[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+ [m
+ // Regexp matcher from Kernighan & Pike,[m
+[1mdiff --git a/init.c b/init.c[m
+[1mindex 046b551..8da3b90 100644[m
+[1m--- a/init.c[m
+[1m+++ b/init.c[m
+[36m@@ -24,14 +24,14 @@[m [mmain(void)[m
+     pid = fork();[m
+     if(pid < 0){[m
+       printf(1, "init: fork failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(pid == 0){[m
+       exec("sh", argv);[m
+       printf(1, "init: exec sh failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+[31m-    while((wpid=wait()) >= 0 && wpid != pid)[m
+[32m+[m[32m    while((wpid=wait(0)) >= 0 && wpid != pid)[m
+       printf(1, "zombie!\n");[m
+   }[m
+ }[m
+[1mdiff --git a/kill.c b/kill.c[m
+[1mindex 364f6af..5a2e450 100644[m
+[1m--- a/kill.c[m
+[1m+++ b/kill.c[m
+[36m@@ -9,9 +9,9 @@[m [mmain(int argc, char **argv)[m
+ [m
+   if(argc < 2){[m
+     printf(2, "usage: kill pid...\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   for(i=1; i<argc; i++)[m
+     kill(atoi(argv[i]));[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/ln.c b/ln.c[m
+[1mindex cf8a64e..14acdc8 100644[m
+[1m--- a/ln.c[m
+[1m+++ b/ln.c[m
+[36m@@ -7,9 +7,9 @@[m [mmain(int argc, char *argv[])[m
+ {[m
+   if(argc != 3){[m
+     printf(2, "Usage: ln old new\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(link(argv[1], argv[2]) < 0)[m
+     printf(2, "link %s %s: failed\n", argv[1], argv[2]);[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/ls.c b/ls.c[m
+[1mindex 2862913..27742c2 100644[m
+[1m--- a/ls.c[m
+[1m+++ b/ls.c[m
+[36m@@ -77,9 +77,9 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   if(argc < 2){[m
+     ls(".");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   for(i=1; i<argc; i++)[m
+     ls(argv[i]);[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/mkdir.c b/mkdir.c[m
+[1mindex 6e4c954..d101838 100644[m
+[1m--- a/mkdir.c[m
+[1m+++ b/mkdir.c[m
+[36m@@ -9,7 +9,7 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   if(argc < 2){[m
+     printf(2, "Usage: mkdir files...\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(i = 1; i < argc; i++){[m
+[36m@@ -19,5 +19,5 @@[m [mmain(int argc, char *argv[])[m
+     }[m
+   }[m
+ [m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/proc.c b/proc.c[m
+[1mindex 806b1b1..42d535f 100644[m
+[1m--- a/proc.c[m
+[1m+++ b/proc.c[m
+[36m@@ -225,11 +225,12 @@[m [mfork(void)[m
+ // An exited process remains in the zombie state[m
+ // until its parent calls wait() to find out it exited.[m
+ void[m
+[31m-exit(void)[m
+[32m+[m[32mexit(int status)[m
+ {[m
+   struct proc *curproc = myproc();[m
+   struct proc *p;[m
+   int fd;[m
+[32m+[m[41m  [m
+ [m
+   if(curproc == initproc)[m
+     panic("init exiting");[m
+[36m@@ -263,6 +264,7 @@[m [mexit(void)[m
+ [m
+   // Jump into the scheduler, never to return.[m
+   curproc->state = ZOMBIE;[m
+[32m+[m[32m  curproc->exitStatus = status;[m
+   sched();[m
+   panic("zombie exit");[m
+ }[m
+[36m@@ -270,12 +272,12 @@[m [mexit(void)[m
+ // Wait for a child process to exit and return its pid.[m
+ // Return -1 if this process has no children.[m
+ int[m
+[31m-wait(void)[m
+[32m+[m[32mwait(int *status)[m
+ {[m
+   struct proc *p;[m
+   int havekids, pid;[m
+   struct proc *curproc = myproc();[m
+[31m-  [m
+[32m+[m
+   acquire(&ptable.lock);[m
+   for(;;){[m
+     // Scan through table looking for exited children.[m
+[36m@@ -285,7 +287,57 @@[m [mwait(void)[m
+         continue;[m
+       havekids = 1;[m
+       if(p->state == ZOMBIE){[m
+[31m-        // Found one.[m
+[32m+[m[32m        // Found one[m
+[32m+[m[32m        if (status != 0) {[m
+[32m+[m	[32m   *status = p->exitStatus;[m
+[32m+[m	[32m}[m
+[32m+[m[32m        pid = p->pid;[m
+[32m+[m[32m        kfree(p->kstack);[m
+[32m+[m[32m        p->kstack = 0;[m
+[32m+[m[32m        freevm(p->pgdir);[m
+[32m+[m[32m        p->pid = 0;[m
+[32m+[m[32m        p->parent = 0;[m
+[32m+[m[32m        p->name[0] = 0;[m
+[32m+[m[32m        p->killed = 0;[m
+[32m+[m[32m        p->state = UNUSED;[m
+[32m+[m[32m        release(&ptable.lock);[m
+[32m+[m[32m        return pid;[m
+[32m+[m[32m      }[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // No point waiting if we don't have any children.[m
+[32m+[m[32m    if(!havekids || curproc->killed){[m
+[32m+[m[32m      release(&ptable.lock);[m
+[32m+[m[32m      return -1;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    // Wait for children to exit.  (See wakeup1 call in proc_exit.)[m
+[32m+[m[32m    sleep(curproc, &ptable.lock);  //DOC: wait-sleep[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m// Wait for a process with given pid to exit and return its pid.[m
+[32m+[m[32m// Return -1 if this process does not exist.[m
+[32m+[m[32mint[m
+[32m+[m[32mwaitpid(int cpid, int *status, int options)[m
+[32m+[m[32m{[m
+[32m+[m[32m  struct proc *p;[m
+[32m+[m[32m  int havekids, pid;[m
+[32m+[m[32m  struct proc *curproc = myproc();[m
+[32m+[m
+[32m+[m[32m  acquire(&ptable.lock);[m
+[32m+[m[32m  for(;;){[m
+[32m+[m[32m    // Scan through table looking for exited children.[m
+[32m+[m[32m    havekids = 0;[m
+[32m+[m[32m    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){[m
+[32m+[m[32m      if(p->parent != curproc)[m
+[32m+[m[32m        continue;[m
+[32m+[m[32m      havekids = 1;[m
+[32m+[m[32m      if((p->state == ZOMBIE) && (p->pid == cpid)){[m
+[32m+[m[32m        // Found one[m
+[32m+[m[32m        if (status != 0) {[m
+[32m+[m	[32m   *status = p->exitStatus;[m
+[32m+[m	[32m}[m
+         pid = p->pid;[m
+         kfree(p->kstack);[m
+         p->kstack = 0;[m
+[1mdiff --git a/proc.h b/proc.h[m
+[1mindex 1647114..2b7e8f7 100644[m
+[1m--- a/proc.h[m
+[1m+++ b/proc.h[m
+[36m@@ -49,6 +49,7 @@[m [mstruct proc {[m
+   struct file *ofile[NOFILE];  // Open files[m
+   struct inode *cwd;           // Current directory[m
+   char name[16];               // Process name (debugging)[m
+[32m+[m[32m  int exitStatus; // new stuff[m
+ };[m
+ [m
+ // Process memory is laid out contiguously, low addresses first:[m
+[1mdiff --git a/rm.c b/rm.c[m
+[1mindex 4fd33c8..83c5f36 100644[m
+[1m--- a/rm.c[m
+[1m+++ b/rm.c[m
+[36m@@ -9,7 +9,7 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   if(argc < 2){[m
+     printf(2, "Usage: rm files...\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(i = 1; i < argc; i++){[m
+[36m@@ -19,5 +19,5 @@[m [mmain(int argc, char *argv[])[m
+     }[m
+   }[m
+ [m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/sh.c b/sh.c[m
+[1mindex 054bab9..342091d 100644[m
+[1m--- a/sh.c[m
+[1m+++ b/sh.c[m
+[36m@@ -65,7 +65,7 @@[m [mruncmd(struct cmd *cmd)[m
+   struct redircmd *rcmd;[m
+ [m
+   if(cmd == 0)[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+ [m
+   switch(cmd->type){[m
+   default:[m
+[36m@@ -74,7 +74,7 @@[m [mruncmd(struct cmd *cmd)[m
+   case EXEC:[m
+     ecmd = (struct execcmd*)cmd;[m
+     if(ecmd->argv[0] == 0)[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     exec(ecmd->argv[0], ecmd->argv);[m
+     printf(2, "exec %s failed\n", ecmd->argv[0]);[m
+     break;[m
+[36m@@ -84,7 +84,7 @@[m [mruncmd(struct cmd *cmd)[m
+     close(rcmd->fd);[m
+     if(open(rcmd->file, rcmd->mode) < 0){[m
+       printf(2, "open %s failed\n", rcmd->file);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     runcmd(rcmd->cmd);[m
+     break;[m
+[36m@@ -93,7 +93,7 @@[m [mruncmd(struct cmd *cmd)[m
+     lcmd = (struct listcmd*)cmd;[m
+     if(fork1() == 0)[m
+       runcmd(lcmd->left);[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+     runcmd(lcmd->right);[m
+     break;[m
+ [m
+[36m@@ -117,8 +117,8 @@[m [mruncmd(struct cmd *cmd)[m
+     }[m
+     close(p[0]);[m
+     close(p[1]);[m
+[31m-    wait();[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+[32m+[m[32m    wait(0);[m
+     break;[m
+ [m
+   case BACK:[m
+[36m@@ -127,7 +127,7 @@[m [mruncmd(struct cmd *cmd)[m
+       runcmd(bcmd->cmd);[m
+     break;[m
+   }[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+ [m
+ int[m
+[36m@@ -166,16 +166,16 @@[m [mmain(void)[m
+     }[m
+     if(fork1() == 0)[m
+       runcmd(parsecmd(buf));[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   }[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+ [m
+ void[m
+ panic(char *s)[m
+ {[m
+   printf(2, "%s\n", s);[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+ [m
+ int[m
+[1mdiff --git a/stressfs.c b/stressfs.c[m
+[1mindex c0a4743..06a07ca 100644[m
+[1m--- a/stressfs.c[m
+[1m+++ b/stressfs.c[m
+[36m@@ -43,7 +43,7 @@[m [mmain(int argc, char *argv[])[m
+     read(fd, data, sizeof(data));[m
+   close(fd);[m
+ [m
+[31m-  wait();[m
+[32m+[m[32m  wait(0);[m
+ [m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/syscall.c b/syscall.c[m
+[1mindex ee85261..89c01e1 100644[m
+[1m--- a/syscall.c[m
+[1m+++ b/syscall.c[m
+[36m@@ -103,6 +103,7 @@[m [mextern int sys_unlink(void);[m
+ extern int sys_wait(void);[m
+ extern int sys_write(void);[m
+ extern int sys_uptime(void);[m
+[32m+[m[32mextern int sys_waitpid(void);[m
+ [m
+ static int (*syscalls[])(void) = {[m
+ [SYS_fork]    sys_fork,[m
+[36m@@ -126,6 +127,7 @@[m [mstatic int (*syscalls[])(void) = {[m
+ [SYS_link]    sys_link,[m
+ [SYS_mkdir]   sys_mkdir,[m
+ [SYS_close]   sys_close,[m
+[32m+[m[32m[SYS_waitpid] sys_waitpid,[m
+ };[m
+ [m
+ void[m
+[1mdiff --git a/syscall.h b/syscall.h[m
+[1mindex bc5f356..eda417c 100644[m
+[1m--- a/syscall.h[m
+[1m+++ b/syscall.h[m
+[36m@@ -20,3 +20,4 @@[m
+ #define SYS_link   19[m
+ #define SYS_mkdir  20[m
+ #define SYS_close  21[m
+[32m+[m[32m#define SYS_waitpid 22[m
+[1mdiff --git a/sysproc.c b/sysproc.c[m
+[1mindex 0686d29..fb1de26 100644[m
+[1m--- a/sysproc.c[m
+[1m+++ b/sysproc.c[m
+[36m@@ -16,14 +16,42 @@[m [msys_fork(void)[m
+ int[m
+ sys_exit(void)[m
+ {[m
+[31m-  exit();[m
+[32m+[m[32m  int status;[m
+[32m+[m[41m  [m
+[32m+[m[32m  if (argint(0, &status) < 0) {[m
+[32m+[m[32m    return -1;[m
+[32m+[m[32m  }[m
+[32m+[m[32m  else {[m
+[32m+[m[32m    exit(status);[m
+[32m+[m[32m  }[m
+   return 0;  // not reached[m
+ }[m
+ [m
+ int[m
+ sys_wait(void)[m
+ {[m
+[31m-  return wait();[m
+[32m+[m[32m  int *status;[m
+[32m+[m[32m  char ** statusPointer = (char**) &status;[m
+[32m+[m[41m  [m
+[32m+[m[32m  if (argptr(0, statusPointer, sizeof(status)) < 0 ) {[m
+[32m+[m[32m    return -1;[m
+[32m+[m[32m  } else {[m
+[32m+[m[32m    return wait(status);[m
+[32m+[m[32m  }[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mint[m
+[32m+[m[32msys_waitpid(void)[m
+[32m+[m[32m{[m
+[32m+[m[32m  int pid, options;[m
+[32m+[m[32m  int *status;[m
+[32m+[m[32m  char ** statusPointer = (char**) &status;[m
+[32m+[m
+[32m+[m[32m  if ((argint(0, &pid) < 0) || (argptr(1, statusPointer, sizeof(status)) < 0) || (argint(2, &options) < 0)) {[m
+[32m+[m[32m    return -1;[m
+[32m+[m[32m  } else {[m
+[32m+[m[32m    return waitpid(pid, status, options);[m
+[32m+[m[32m  }[m
+ }[m
+ [m
+ int[m
+[1mdiff --git a/trap.c b/trap.c[m
+[1mindex 41c66eb..dbc9f6f 100644[m
+[1m--- a/trap.c[m
+[1m+++ b/trap.c[m
+[36m@@ -38,11 +38,11 @@[m [mtrap(struct trapframe *tf)[m
+ {[m
+   if(tf->trapno == T_SYSCALL){[m
+     if(myproc()->killed)[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     myproc()->tf = tf;[m
+     syscall();[m
+     if(myproc()->killed)[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     return;[m
+   }[m
+ [m
+[36m@@ -98,7 +98,7 @@[m [mtrap(struct trapframe *tf)[m
+   // (If it is still executing in the kernel, let it keep running[m
+   // until it gets to the regular system call return.)[m
+   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+ [m
+   // Force process to give up CPU on clock tick.[m
+   // If interrupts were on while locks held, would need to check nlock.[m
+[36m@@ -108,5 +108,5 @@[m [mtrap(struct trapframe *tf)[m
+ [m
+   // Check if the process has been killed since we yielded[m
+   if(myproc() && myproc()->killed && (tf->cs&3) == DPL_USER)[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+ }[m
+[1mdiff --git a/user.h b/user.h[m
+[1mindex 4f99c52..08a0d6c 100644[m
+[1m--- a/user.h[m
+[1m+++ b/user.h[m
+[36m@@ -3,8 +3,9 @@[m [mstruct rtcdate;[m
+ [m
+ // system calls[m
+ int fork(void);[m
+[31m-int exit(void) __attribute__((noreturn));[m
+[31m-int wait(void);[m
+[32m+[m[32mint exit(int) __attribute__((noreturn));[m
+[32m+[m[32mint wait(int*);[m
+[32m+[m[32mint waitpid(int, int*, int);[m
+ int pipe(int*);[m
+ int write(int, const void*, int);[m
+ int read(int, void*, int);[m
+[1mdiff --git a/usertests.c b/usertests.c[m
+[1mindex a1e97e7..4f6eefa 100644[m
+[1m--- a/usertests.c[m
+[1m+++ b/usertests.c[m
+[36m@@ -21,24 +21,24 @@[m [miputtest(void)[m
+ [m
+   if(mkdir("iputdir") < 0){[m
+     printf(stdout, "mkdir failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("iputdir") < 0){[m
+     printf(stdout, "chdir iputdir failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("../iputdir") < 0){[m
+     printf(stdout, "unlink ../iputdir failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("/") < 0){[m
+     printf(stdout, "chdir / failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(stdout, "iput test ok\n");[m
+ }[m
+ [m
+[31m-// does exit() call iput(p->cwd) in a transaction?[m
+[32m+[m[32m// does exit(0) call iput(p->cwd) in a transaction?[m
+ void[m
+ exitiputtest(void)[m
+ {[m
+[36m@@ -49,24 +49,24 @@[m [mexitiputtest(void)[m
+   pid = fork();[m
+   if(pid < 0){[m
+     printf(stdout, "fork failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(pid == 0){[m
+     if(mkdir("iputdir") < 0){[m
+       printf(stdout, "mkdir failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(chdir("iputdir") < 0){[m
+       printf(stdout, "child chdir failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(unlink("../iputdir") < 0){[m
+       printf(stdout, "unlink ../iputdir failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+[31m-  wait();[m
+[32m+[m[32m  wait(0);[m
+   printf(stdout, "exitiput test ok\n");[m
+ }[m
+ [m
+[36m@@ -89,27 +89,27 @@[m [mopeniputtest(void)[m
+   printf(stdout, "openiput test\n");[m
+   if(mkdir("oidir") < 0){[m
+     printf(stdout, "mkdir oidir failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   pid = fork();[m
+   if(pid < 0){[m
+     printf(stdout, "fork failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(pid == 0){[m
+     int fd = open("oidir", O_RDWR);[m
+     if(fd >= 0){[m
+       printf(stdout, "open directory for write succeeded\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   sleep(1);[m
+   if(unlink("oidir") != 0){[m
+     printf(stdout, "unlink failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+[31m-  wait();[m
+[32m+[m[32m  wait(0);[m
+   printf(stdout, "openiput test ok\n");[m
+ }[m
+ [m
+[36m@@ -124,13 +124,13 @@[m [mopentest(void)[m
+   fd = open("echo", 0);[m
+   if(fd < 0){[m
+     printf(stdout, "open echo failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+   fd = open("doesnotexist", 0);[m
+   if(fd >= 0){[m
+     printf(stdout, "open doesnotexist succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(stdout, "open test ok\n");[m
+ }[m
+[36m@@ -147,16 +147,16 @@[m [mwritetest(void)[m
+     printf(stdout, "creat small succeeded; ok\n");[m
+   } else {[m
+     printf(stdout, "error: creat small failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   for(i = 0; i < 100; i++){[m
+     if(write(fd, "aaaaaaaaaa", 10) != 10){[m
+       printf(stdout, "error: write aa %d new file failed\n", i);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(write(fd, "bbbbbbbbbb", 10) != 10){[m
+       printf(stdout, "error: write bb %d new file failed\n", i);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+   printf(stdout, "writes ok\n");[m
+[36m@@ -166,20 +166,20 @@[m [mwritetest(void)[m
+     printf(stdout, "open small succeeded ok\n");[m
+   } else {[m
+     printf(stdout, "error: open small failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   i = read(fd, buf, 2000);[m
+   if(i == 2000){[m
+     printf(stdout, "read succeeded ok\n");[m
+   } else {[m
+     printf(stdout, "read failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+   if(unlink("small") < 0){[m
+     printf(stdout, "unlink small failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(stdout, "small file test ok\n");[m
+ }[m
+[36m@@ -194,14 +194,14 @@[m [mwritetest1(void)[m
+   fd = open("big", O_CREATE|O_RDWR);[m
+   if(fd < 0){[m
+     printf(stdout, "error: creat big failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(i = 0; i < MAXFILE; i++){[m
+     ((int*)buf)[0] = i;[m
+     if(write(fd, buf, 512) != 512){[m
+       printf(stdout, "error: write big file failed\n", i);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+[36m@@ -210,7 +210,7 @@[m [mwritetest1(void)[m
+   fd = open("big", O_RDONLY);[m
+   if(fd < 0){[m
+     printf(stdout, "error: open big failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   n = 0;[m
+[36m@@ -219,24 +219,24 @@[m [mwritetest1(void)[m
+     if(i == 0){[m
+       if(n == MAXFILE - 1){[m
+         printf(stdout, "read only %d blocks from big", n);[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+       break;[m
+     } else if(i != 512){[m
+       printf(stdout, "read failed %d\n", i);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(((int*)buf)[0] != n){[m
+       printf(stdout, "read content of block %d is %d\n",[m
+              n, ((int*)buf)[0]);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     n++;[m
+   }[m
+   close(fd);[m
+   if(unlink("big") < 0){[m
+     printf(stdout, "unlink big failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(stdout, "big files ok\n");[m
+ }[m
+[36m@@ -270,22 +270,22 @@[m [mvoid dirtest(void)[m
+ [m
+   if(mkdir("dir0") < 0){[m
+     printf(stdout, "mkdir failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(chdir("dir0") < 0){[m
+     printf(stdout, "chdir dir0 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(chdir("..") < 0){[m
+     printf(stdout, "chdir .. failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(unlink("dir0") < 0){[m
+     printf(stdout, "unlink dir0 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(stdout, "mkdir test ok\n");[m
+ }[m
+[36m@@ -296,7 +296,7 @@[m [mexectest(void)[m
+   printf(stdout, "exec test\n");[m
+   if(exec("echo", echoargv) < 0){[m
+     printf(stdout, "exec echo failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ }[m
+ [m
+[36m@@ -310,7 +310,7 @@[m [mpipe1(void)[m
+ [m
+   if(pipe(fds) != 0){[m
+     printf(1, "pipe() failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   pid = fork();[m
+   seq = 0;[m
+[36m@@ -321,10 +321,10 @@[m [mpipe1(void)[m
+         buf[i] = seq++;[m
+       if(write(fds[1], buf, 1033) != 1033){[m
+         printf(1, "pipe1 oops 1\n");[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+     }[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   } else if(pid > 0){[m
+     close(fds[1]);[m
+     total = 0;[m
+[36m@@ -343,13 +343,13 @@[m [mpipe1(void)[m
+     }[m
+     if(total != 5 * 1033){[m
+       printf(1, "pipe1 oops 3 total %d\n", total);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     close(fds[0]);[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   } else {[m
+     printf(1, "fork() failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(1, "pipe1 ok\n");[m
+ }[m
+[36m@@ -394,9 +394,9 @@[m [mpreempt(void)[m
+   kill(pid2);[m
+   kill(pid3);[m
+   printf(1, "wait... ");[m
+[31m-  wait();[m
+[31m-  wait();[m
+[31m-  wait();[m
+[32m+[m[32m  wait(0);[m
+[32m+[m[32m  wait(0);[m
+[32m+[m[32m  wait(0);[m
+   printf(1, "preempt ok\n");[m
+ }[m
+ [m
+[36m@@ -413,12 +413,12 @@[m [mexitwait(void)[m
+       return;[m
+     }[m
+     if(pid){[m
+[31m-      if(wait() != pid){[m
+[32m+[m[32m      if(wait(0) != pid){[m
+         printf(1, "wait wrong pid\n");[m
+         return;[m
+       }[m
+     } else {[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+   printf(1, "exitwait ok\n");[m
+[36m@@ -447,13 +447,13 @@[m [mmem(void)[m
+     if(m1 == 0){[m
+       printf(1, "couldn't allocate mem?!!\n");[m
+       kill(ppid);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     free(m1);[m
+     printf(1, "mem ok\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   } else {[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   }[m
+ }[m
+ [m
+[36m@@ -484,9 +484,9 @@[m [msharedfd(void)[m
+     }[m
+   }[m
+   if(pid == 0)[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   else[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   close(fd);[m
+   fd = open("sharedfd", 0);[m
+   if(fd < 0){[m
+[36m@@ -508,7 +508,7 @@[m [msharedfd(void)[m
+     printf(1, "sharedfd ok\n");[m
+   } else {[m
+     printf(1, "sharedfd oops %d %d\n", nc, np);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ }[m
+ [m
+[36m@@ -530,29 +530,29 @@[m [mfourfiles(void)[m
+     pid = fork();[m
+     if(pid < 0){[m
+       printf(1, "fork failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+ [m
+     if(pid == 0){[m
+       fd = open(fname, O_CREATE | O_RDWR);[m
+       if(fd < 0){[m
+         printf(1, "create failed\n");[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+ [m
+       memset(buf, '0'+pi, 512);[m
+       for(i = 0; i < 12; i++){[m
+         if((n = write(fd, buf, 500)) != 500){[m
+           printf(1, "write failed %d\n", n);[m
+[31m-          exit();[m
+[32m+[m[32m          exit(0);[m
+         }[m
+       }[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+   for(pi = 0; pi < 4; pi++){[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   }[m
+ [m
+   for(i = 0; i < 2; i++){[m
+[36m@@ -563,7 +563,7 @@[m [mfourfiles(void)[m
+       for(j = 0; j < n; j++){[m
+         if(buf[j] != '0'+i){[m
+           printf(1, "wrong char\n");[m
+[31m-          exit();[m
+[32m+[m[32m          exit(0);[m
+         }[m
+       }[m
+       total += n;[m
+[36m@@ -571,7 +571,7 @@[m [mfourfiles(void)[m
+     close(fd);[m
+     if(total != 12*500){[m
+       printf(1, "wrong length %d\n", total);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     unlink(fname);[m
+   }[m
+[36m@@ -593,7 +593,7 @@[m [mcreatedelete(void)[m
+     pid = fork();[m
+     if(pid < 0){[m
+       printf(1, "fork failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+ [m
+     if(pid == 0){[m
+[36m@@ -604,23 +604,23 @@[m [mcreatedelete(void)[m
+         fd = open(name, O_CREATE | O_RDWR);[m
+         if(fd < 0){[m
+           printf(1, "create failed\n");[m
+[31m-          exit();[m
+[32m+[m[32m          exit(0);[m
+         }[m
+         close(fd);[m
+         if(i > 0 && (i % 2 ) == 0){[m
+           name[1] = '0' + (i / 2);[m
+           if(unlink(name) < 0){[m
+             printf(1, "unlink failed\n");[m
+[31m-            exit();[m
+[32m+[m[32m            exit(0);[m
+           }[m
+         }[m
+       }[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+   for(pi = 0; pi < 4; pi++){[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   }[m
+ [m
+   name[0] = name[1] = name[2] = 0;[m
+[36m@@ -631,10 +631,10 @@[m [mcreatedelete(void)[m
+       fd = open(name, 0);[m
+       if((i == 0 || i >= N/2) && fd < 0){[m
+         printf(1, "oops createdelete %s didn't exist\n", name);[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       } else if((i >= 1 && i < N/2) && fd >= 0){[m
+         printf(1, "oops createdelete %s did exist\n", name);[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+       if(fd >= 0)[m
+         close(fd);[m
+[36m@@ -662,7 +662,7 @@[m [munlinkread(void)[m
+   fd = open("unlinkread", O_CREATE | O_RDWR);[m
+   if(fd < 0){[m
+     printf(1, "create unlinkread failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   write(fd, "hello", 5);[m
+   close(fd);[m
+[36m@@ -670,11 +670,11 @@[m [munlinkread(void)[m
+   fd = open("unlinkread", O_RDWR);[m
+   if(fd < 0){[m
+     printf(1, "open unlinkread failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("unlinkread") != 0){[m
+     printf(1, "unlink unlinkread failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   fd1 = open("unlinkread", O_CREATE | O_RDWR);[m
+[36m@@ -683,15 +683,15 @@[m [munlinkread(void)[m
+ [m
+   if(read(fd, buf, sizeof(buf)) != 5){[m
+     printf(1, "unlinkread read failed");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(buf[0] != 'h'){[m
+     printf(1, "unlinkread wrong data\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(write(fd, buf, 10) != 10){[m
+     printf(1, "unlinkread write failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+   unlink("unlinkread");[m
+[36m@@ -711,50 +711,50 @@[m [mlinktest(void)[m
+   fd = open("lf1", O_CREATE|O_RDWR);[m
+   if(fd < 0){[m
+     printf(1, "create lf1 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(write(fd, "hello", 5) != 5){[m
+     printf(1, "write lf1 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+   if(link("lf1", "lf2") < 0){[m
+     printf(1, "link lf1 lf2 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   unlink("lf1");[m
+ [m
+   if(open("lf1", 0) >= 0){[m
+     printf(1, "unlinked lf1 but it is still there!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   fd = open("lf2", 0);[m
+   if(fd < 0){[m
+     printf(1, "open lf2 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(read(fd, buf, sizeof(buf)) != 5){[m
+     printf(1, "read lf2 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+   if(link("lf2", "lf2") >= 0){[m
+     printf(1, "link lf2 lf2 succeeded! oops\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   unlink("lf2");[m
+   if(link("lf2", "lf1") >= 0){[m
+     printf(1, "link non-existant succeeded! oops\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(link(".", "lf1") >= 0){[m
+     printf(1, "link . lf1 succeeded! oops\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   printf(1, "linktest ok\n");[m
+[36m@@ -787,14 +787,14 @@[m [mconcreate(void)[m
+       fd = open(file, O_CREATE | O_RDWR);[m
+       if(fd < 0){[m
+         printf(1, "concreate create %s failed\n", file);[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+       close(fd);[m
+     }[m
+     if(pid == 0)[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     else[m
+[31m-      wait();[m
+[32m+[m[32m      wait(0);[m
+   }[m
+ [m
+   memset(fa, 0, sizeof(fa));[m
+[36m@@ -807,11 +807,11 @@[m [mconcreate(void)[m
+       i = de.name[1] - '0';[m
+       if(i < 0 || i >= sizeof(fa)){[m
+         printf(1, "concreate weird file %s\n", de.name);[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+       if(fa[i]){[m
+         printf(1, "concreate duplicate file %s\n", de.name);[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+       fa[i] = 1;[m
+       n++;[m
+[36m@@ -821,7 +821,7 @@[m [mconcreate(void)[m
+ [m
+   if(n != 40){[m
+     printf(1, "concreate not enough files in directory listing\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(i = 0; i < 40; i++){[m
+[36m@@ -829,7 +829,7 @@[m [mconcreate(void)[m
+     pid = fork();[m
+     if(pid < 0){[m
+       printf(1, "fork failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(((i % 3) == 0 && pid == 0) ||[m
+        ((i % 3) == 1 && pid != 0)){[m
+[36m@@ -844,9 +844,9 @@[m [mconcreate(void)[m
+       unlink(file);[m
+     }[m
+     if(pid == 0)[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     else[m
+[31m-      wait();[m
+[32m+[m[32m      wait(0);[m
+   }[m
+ [m
+   printf(1, "concreate ok\n");[m
+[36m@@ -865,7 +865,7 @@[m [mlinkunlink()[m
+   pid = fork();[m
+   if(pid < 0){[m
+     printf(1, "fork failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   unsigned int x = (pid ? 1 : 97);[m
+[36m@@ -881,9 +881,9 @@[m [mlinkunlink()[m
+   }[m
+ [m
+   if(pid)[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   else[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+ [m
+   printf(1, "linkunlink ok\n");[m
+ }[m
+[36m@@ -901,7 +901,7 @@[m [mbigdir(void)[m
+   fd = open("bd", O_CREATE);[m
+   if(fd < 0){[m
+     printf(1, "bigdir create failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+[36m@@ -912,7 +912,7 @@[m [mbigdir(void)[m
+     name[3] = '\0';[m
+     if(link("bd", name) != 0){[m
+       printf(1, "bigdir link failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+[36m@@ -924,7 +924,7 @@[m [mbigdir(void)[m
+     name[3] = '\0';[m
+     if(unlink(name) != 0){[m
+       printf(1, "bigdir unlink failed");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+[36m@@ -941,31 +941,31 @@[m [msubdir(void)[m
+   unlink("ff");[m
+   if(mkdir("dd") != 0){[m
+     printf(1, "subdir mkdir dd failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   fd = open("dd/ff", O_CREATE | O_RDWR);[m
+   if(fd < 0){[m
+     printf(1, "create dd/ff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   write(fd, "ff", 2);[m
+   close(fd);[m
+ [m
+   if(unlink("dd") >= 0){[m
+     printf(1, "unlink dd (non-empty dir) succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(mkdir("/dd/dd") != 0){[m
+     printf(1, "subdir mkdir dd/dd failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   fd = open("dd/dd/ff", O_CREATE | O_RDWR);[m
+   if(fd < 0){[m
+     printf(1, "create dd/dd/ff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   write(fd, "FF", 2);[m
+   close(fd);[m
+[36m@@ -973,142 +973,142 @@[m [msubdir(void)[m
+   fd = open("dd/dd/../ff", 0);[m
+   if(fd < 0){[m
+     printf(1, "open dd/dd/../ff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   cc = read(fd, buf, sizeof(buf));[m
+   if(cc != 2 || buf[0] != 'f'){[m
+     printf(1, "dd/dd/../ff wrong content\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+   if(link("dd/dd/ff", "dd/dd/ffff") != 0){[m
+     printf(1, "link dd/dd/ff dd/dd/ffff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(unlink("dd/dd/ff") != 0){[m
+     printf(1, "unlink dd/dd/ff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(open("dd/dd/ff", O_RDONLY) >= 0){[m
+     printf(1, "open (unlinked) dd/dd/ff succeeded\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(chdir("dd") != 0){[m
+     printf(1, "chdir dd failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("dd/../../dd") != 0){[m
+     printf(1, "chdir dd/../../dd failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("dd/../../../dd") != 0){[m
+     printf(1, "chdir dd/../../dd failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("./..") != 0){[m
+     printf(1, "chdir ./.. failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   fd = open("dd/dd/ffff", 0);[m
+   if(fd < 0){[m
+     printf(1, "open dd/dd/ffff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(read(fd, buf, sizeof(buf)) != 2){[m
+     printf(1, "read dd/dd/ffff wrong len\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+   if(open("dd/dd/ff", O_RDONLY) >= 0){[m
+     printf(1, "open (unlinked) dd/dd/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(open("dd/ff/ff", O_CREATE|O_RDWR) >= 0){[m
+     printf(1, "create dd/ff/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(open("dd/xx/ff", O_CREATE|O_RDWR) >= 0){[m
+     printf(1, "create dd/xx/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(open("dd", O_CREATE) >= 0){[m
+     printf(1, "create dd succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(open("dd", O_RDWR) >= 0){[m
+     printf(1, "open dd rdwr succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(open("dd", O_WRONLY) >= 0){[m
+     printf(1, "open dd wronly succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(link("dd/ff/ff", "dd/dd/xx") == 0){[m
+     printf(1, "link dd/ff/ff dd/dd/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(link("dd/xx/ff", "dd/dd/xx") == 0){[m
+     printf(1, "link dd/xx/ff dd/dd/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(link("dd/ff", "dd/dd/ffff") == 0){[m
+     printf(1, "link dd/ff dd/dd/ffff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(mkdir("dd/ff/ff") == 0){[m
+     printf(1, "mkdir dd/ff/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(mkdir("dd/xx/ff") == 0){[m
+     printf(1, "mkdir dd/xx/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(mkdir("dd/dd/ffff") == 0){[m
+     printf(1, "mkdir dd/dd/ffff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dd/xx/ff") == 0){[m
+     printf(1, "unlink dd/xx/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dd/ff/ff") == 0){[m
+     printf(1, "unlink dd/ff/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("dd/ff") == 0){[m
+     printf(1, "chdir dd/ff succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("dd/xx") == 0){[m
+     printf(1, "chdir dd/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(unlink("dd/dd/ffff") != 0){[m
+     printf(1, "unlink dd/dd/ff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dd/ff") != 0){[m
+     printf(1, "unlink dd/ff failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dd") == 0){[m
+     printf(1, "unlink non-empty dd succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dd/dd") < 0){[m
+     printf(1, "unlink dd/dd failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dd") < 0){[m
+     printf(1, "unlink dd failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   printf(1, "subdir ok\n");[m
+[36m@@ -1127,14 +1127,14 @@[m [mbigwrite(void)[m
+     fd = open("bigwrite", O_CREATE | O_RDWR);[m
+     if(fd < 0){[m
+       printf(1, "cannot create bigwrite\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     int i;[m
+     for(i = 0; i < 2; i++){[m
+       int cc = write(fd, buf, sz);[m
+       if(cc != sz){[m
+         printf(1, "write(%d) ret %d\n", sz, cc);[m
+[31m-        exit();[m
+[32m+[m[32m        exit(0);[m
+       }[m
+     }[m
+     close(fd);[m
+[36m@@ -1155,13 +1155,13 @@[m [mbigfile(void)[m
+   fd = open("bigfile", O_CREATE | O_RDWR);[m
+   if(fd < 0){[m
+     printf(1, "cannot create bigfile");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   for(i = 0; i < 20; i++){[m
+     memset(buf, i, 600);[m
+     if(write(fd, buf, 600) != 600){[m
+       printf(1, "write bigfile failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+   close(fd);[m
+[36m@@ -1169,31 +1169,31 @@[m [mbigfile(void)[m
+   fd = open("bigfile", 0);[m
+   if(fd < 0){[m
+     printf(1, "cannot open bigfile\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   total = 0;[m
+   for(i = 0; ; i++){[m
+     cc = read(fd, buf, 300);[m
+     if(cc < 0){[m
+       printf(1, "read bigfile failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(cc == 0)[m
+       break;[m
+     if(cc != 300){[m
+       printf(1, "short read bigfile\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(buf[0] != i/2 || buf[299] != i/2){[m
+       printf(1, "read bigfile wrong data\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     total += cc;[m
+   }[m
+   close(fd);[m
+   if(total != 20*600){[m
+     printf(1, "read bigfile wrong total\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   unlink("bigfile");[m
+ [m
+[36m@@ -1210,32 +1210,32 @@[m [mfourteen(void)[m
+ [m
+   if(mkdir("12345678901234") != 0){[m
+     printf(1, "mkdir 12345678901234 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(mkdir("12345678901234/123456789012345") != 0){[m
+     printf(1, "mkdir 12345678901234/123456789012345 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   fd = open("123456789012345/123456789012345/123456789012345", O_CREATE);[m
+   if(fd < 0){[m
+     printf(1, "create 123456789012345/123456789012345/123456789012345 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+   fd = open("12345678901234/12345678901234/12345678901234", 0);[m
+   if(fd < 0){[m
+     printf(1, "open 12345678901234/12345678901234/12345678901234 failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+   if(mkdir("12345678901234/12345678901234") == 0){[m
+     printf(1, "mkdir 12345678901234/12345678901234 succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(mkdir("123456789012345/12345678901234") == 0){[m
+     printf(1, "mkdir 12345678901234/123456789012345 succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   printf(1, "fourteen ok\n");[m
+[36m@@ -1247,35 +1247,35 @@[m [mrmdot(void)[m
+   printf(1, "rmdot test\n");[m
+   if(mkdir("dots") != 0){[m
+     printf(1, "mkdir dots failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("dots") != 0){[m
+     printf(1, "chdir dots failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink(".") == 0){[m
+     printf(1, "rm . worked!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("..") == 0){[m
+     printf(1, "rm .. worked!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(chdir("/") != 0){[m
+     printf(1, "chdir / failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dots/.") == 0){[m
+     printf(1, "unlink dots/. worked!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dots/..") == 0){[m
+     printf(1, "unlink dots/.. worked!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dots") != 0){[m
+     printf(1, "unlink dots failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(1, "rmdot ok\n");[m
+ }[m
+[36m@@ -1290,49 +1290,49 @@[m [mdirfile(void)[m
+   fd = open("dirfile", O_CREATE);[m
+   if(fd < 0){[m
+     printf(1, "create dirfile failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+   if(chdir("dirfile") == 0){[m
+     printf(1, "chdir dirfile succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   fd = open("dirfile/xx", 0);[m
+   if(fd >= 0){[m
+     printf(1, "create dirfile/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   fd = open("dirfile/xx", O_CREATE);[m
+   if(fd >= 0){[m
+     printf(1, "create dirfile/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(mkdir("dirfile/xx") == 0){[m
+     printf(1, "mkdir dirfile/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dirfile/xx") == 0){[m
+     printf(1, "unlink dirfile/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(link("README", "dirfile/xx") == 0){[m
+     printf(1, "link to dirfile/xx succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(unlink("dirfile") != 0){[m
+     printf(1, "unlink dirfile failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   fd = open(".", O_RDWR);[m
+   if(fd >= 0){[m
+     printf(1, "open . for writing succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   fd = open(".", 0);[m
+   if(write(fd, "x", 1) > 0){[m
+     printf(1, "write . succeeded!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+ [m
+[36m@@ -1351,11 +1351,11 @@[m [miref(void)[m
+   for(i = 0; i < 50 + 1; i++){[m
+     if(mkdir("irefd") != 0){[m
+       printf(1, "mkdir irefd failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(chdir("irefd") != 0){[m
+       printf(1, "chdir irefd failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+ [m
+     mkdir("");[m
+[36m@@ -1388,24 +1388,24 @@[m [mforktest(void)[m
+     if(pid < 0)[m
+       break;[m
+     if(pid == 0)[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+   }[m
+ [m
+   if(n == 1000){[m
+     printf(1, "fork claimed to work 1000 times!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(; n > 0; n--){[m
+[31m-    if(wait() < 0){[m
+[32m+[m[32m    if(wait(0) < 0){[m
+       printf(1, "wait stopped early\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+[31m-  if(wait() != -1){[m
+[32m+[m[32m  if(wait(0) != -1){[m
+     printf(1, "wait got too many\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   printf(1, "fork test OK\n");[m
+[36m@@ -1428,7 +1428,7 @@[m [msbrktest(void)[m
+     b = sbrk(1);[m
+     if(b != a){[m
+       printf(stdout, "sbrk test failed %d %x %x\n", i, a, b);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     *b = 1;[m
+     a = b + 1;[m
+[36m@@ -1436,17 +1436,17 @@[m [msbrktest(void)[m
+   pid = fork();[m
+   if(pid < 0){[m
+     printf(stdout, "sbrk test fork failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   c = sbrk(1);[m
+   c = sbrk(1);[m
+   if(c != a + 1){[m
+     printf(stdout, "sbrk test failed post-fork\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(pid == 0)[m
+[31m-    exit();[m
+[31m-  wait();[m
+[32m+[m[32m    exit(0);[m
+[32m+[m[32m  wait(0);[m
+ [m
+   // can one grow address space to something big?[m
+ #define BIG (100*1024*1024)[m
+[36m@@ -1455,7 +1455,7 @@[m [msbrktest(void)[m
+   p = sbrk(amt);[m
+   if (p != a) {[m
+     printf(stdout, "sbrk test failed to grow big address space; enough phys mem?\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   lastaddr = (char*) (BIG-1);[m
+   *lastaddr = 99;[m
+[36m@@ -1465,12 +1465,12 @@[m [msbrktest(void)[m
+   c = sbrk(-4096);[m
+   if(c == (char*)0xffffffff){[m
+     printf(stdout, "sbrk could not deallocate\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   c = sbrk(0);[m
+   if(c != a - 4096){[m
+     printf(stdout, "sbrk deallocation produced wrong address, a %x c %x\n", a, c);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   // can one re-allocate that page?[m
+[36m@@ -1478,19 +1478,19 @@[m [msbrktest(void)[m
+   c = sbrk(4096);[m
+   if(c != a || sbrk(0) != a + 4096){[m
+     printf(stdout, "sbrk re-allocation failed, a %x c %x\n", a, c);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   if(*lastaddr == 99){[m
+     // should be zero[m
+     printf(stdout, "sbrk de-allocation didn't really deallocate\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   a = sbrk(0);[m
+   c = sbrk(-(sbrk(0) - oldbrk));[m
+   if(c != a){[m
+     printf(stdout, "sbrk downsize failed, a %x c %x\n", a, c);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   // can we read the kernel's memory?[m
+[36m@@ -1499,21 +1499,21 @@[m [msbrktest(void)[m
+     pid = fork();[m
+     if(pid < 0){[m
+       printf(stdout, "fork failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     if(pid == 0){[m
+       printf(stdout, "oops could read %x = %x\n", a, *a);[m
+       kill(ppid);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   }[m
+ [m
+   // if we run the system out of memory, does it clean up the last[m
+   // failed allocation?[m
+   if(pipe(fds) != 0){[m
+     printf(1, "pipe() failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   for(i = 0; i < sizeof(pids)/sizeof(pids[0]); i++){[m
+     if((pids[i] = fork()) == 0){[m
+[36m@@ -1533,11 +1533,11 @@[m [msbrktest(void)[m
+     if(pids[i] == -1)[m
+       continue;[m
+     kill(pids[i]);[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+   }[m
+   if(c == (char*)0xffffffff){[m
+     printf(stdout, "failed sbrk leaked memory\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   if(sbrk(0) > oldbrk)[m
+[36m@@ -1572,17 +1572,17 @@[m [mvalidatetest(void)[m
+     if((pid = fork()) == 0){[m
+       // try to crash the kernel by passing in a badly placed integer[m
+       validateint((int*)p);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     sleep(0);[m
+     sleep(0);[m
+     kill(pid);[m
+[31m-    wait();[m
+[32m+[m[32m    wait(0);[m
+ [m
+     // try to crash the kernel by passing in a bad string pointer[m
+     if(link("nosuchfile", (char*)p) != -1){[m
+       printf(stdout, "link should not succeed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+ [m
+[36m@@ -1600,7 +1600,7 @@[m [mbsstest(void)[m
+   for(i = 0; i < sizeof(uninit); i++){[m
+     if(uninit[i] != '\0'){[m
+       printf(stdout, "bss test failed\n");[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+   }[m
+   printf(stdout, "bss test ok\n");[m
+[36m@@ -1627,16 +1627,16 @@[m [mbigargtest(void)[m
+     printf(stdout, "bigarg test ok\n");[m
+     fd = open("bigarg-ok", O_CREATE);[m
+     close(fd);[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   } else if(pid < 0){[m
+     printf(stdout, "bigargtest: fork failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+[31m-  wait();[m
+[32m+[m[32m  wait(0);[m
+   fd = open("bigarg-ok", 0);[m
+   if(fd < 0){[m
+     printf(stdout, "bigarg test failed!\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(fd);[m
+   unlink("bigarg-ok");[m
+[36m@@ -1715,12 +1715,12 @@[m [muio()[m
+     port = RTC_DATA;[m
+     asm volatile("inb %1,%0" : "=a" (val) : "d" (port));[m
+     printf(1, "uio: uio succeeded; test FAILED\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   } else if(pid < 0){[m
+     printf (1, "fork failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+[31m-  wait();[m
+[32m+[m[32m  wait(0);[m
+   printf(1, "uio test done\n");[m
+ }[m
+ [m
+[36m@@ -1730,7 +1730,7 @@[m [mvoid argptest()[m
+   fd = open("init", O_RDONLY);[m
+   if (fd < 0) {[m
+     printf(2, "open failed\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   read(fd, sbrk(0) - 1, -1);[m
+   close(fd);[m
+[36m@@ -1752,7 +1752,7 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   if(open("usertests.ran", 0) >= 0){[m
+     printf(1, "already ran user tests -- rebuild fs.img\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   close(open("usertests.ran", O_CREATE));[m
+ [m
+[36m@@ -1799,5 +1799,5 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   exectest();[m
+ [m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/usys.S b/usys.S[m
+[1mindex 8bfd8a1..024b71a 100644[m
+[1m--- a/usys.S[m
+[1m+++ b/usys.S[m
+[36m@@ -29,3 +29,4 @@[m [mSYSCALL(getpid)[m
+ SYSCALL(sbrk)[m
+ SYSCALL(sleep)[m
+ SYSCALL(uptime)[m
+[32m+[m[32mSYSCALL(waitpid)[m
+[1mdiff --git a/wc.c b/wc.c[m
+[1mindex d6a54df..1d4f708 100644[m
+[1m--- a/wc.c[m
+[1m+++ b/wc.c[m
+[36m@@ -27,7 +27,7 @@[m [mwc(int fd, char *name)[m
+   }[m
+   if(n < 0){[m
+     printf(1, "wc: read error\n");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+   printf(1, "%d %d %d %s\n", l, w, c, name);[m
+ }[m
+[36m@@ -39,16 +39,16 @@[m [mmain(int argc, char *argv[])[m
+ [m
+   if(argc <= 1){[m
+     wc(0, "");[m
+[31m-    exit();[m
+[32m+[m[32m    exit(0);[m
+   }[m
+ [m
+   for(i = 1; i < argc; i++){[m
+     if((fd = open(argv[i], 0)) < 0){[m
+       printf(1, "wc: cannot open %s\n", argv[i]);[m
+[31m-      exit();[m
+[32m+[m[32m      exit(0);[m
+     }[m
+     wc(fd, argv[i]);[m
+     close(fd);[m
+   }[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
+[1mdiff --git a/zombie.c b/zombie.c[m
+[1mindex ee817da..c96b92d 100644[m
+[1m--- a/zombie.c[m
+[1m+++ b/zombie.c[m
+[36m@@ -10,5 +10,5 @@[m [mmain(void)[m
+ {[m
+   if(fork() > 0)[m
+     sleep(5);  // Let child exit before parent.[m
+[31m-  exit();[m
+[32m+[m[32m  exit(0);[m
+ }[m
