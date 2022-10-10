@@ -7,19 +7,18 @@ int exitWait(void) {
 	  int pid, ret_pid, exit_status;
     int i;
   // use this part to test exit(int status) and wait(int* status)
- 
   printf(1, "\n  Parts a & b) testing exit(int status) and wait(int* status):\n");
 
   for (i = 0; i < 2; i++) {
     pid = fork();
     if (pid == 0) { // only the child executed this code
       if (i == 0){
-        printf(1, "\nThis is child with PID# %d and I will exit with status %d\n", getpid(), 0);
-        exit(0);
+        printf(1, "\nThis is child with PID# %d and I will exit with status %d\n", getpid(), 21);
+        exit(21);
       }
       else{
-	      printf(1, "\nThis is child with PID# %d and I will exit with status %d\n" ,getpid(), -1);
-        exit(-1);
+	      printf(1, "\nThis is child with PID# %d and I will exit with status %d\n" ,getpid(), 22);
+        exit(22);
       } 
     } else if (pid > 0) { // only the parent executes this code
       ret_pid = wait(&exit_status);
@@ -78,7 +77,7 @@ int waitPid(void){
   printf(1, "\n This is the parent: Now try to give invalid argument.\n");
   ret_pid = waitpid(9999, (int*) 0xffffffff, 0);
   printf(1, "\n This is the parent: Got ret code %d, expected: -1\n",ret_pid);
-
+  
   return 0;
 }
 
@@ -93,7 +92,7 @@ int main(int argc, char *argv[])
   if (atoi(argv[1]) == 1) {
 	exitWait(); 
   } else if (atoi(argv[1]) == 2) {
-	// waitPid(); 
+	waitPid(); 
   } else {
    printf(1, "\ntype \"%s 1\" to test exit and wait, \"%s 2\" to test waitpid\n", argv[0], argv[0]);
   }
