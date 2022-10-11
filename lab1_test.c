@@ -13,12 +13,12 @@ int exitWait(void) {
     pid = fork();
     if (pid == 0) { // only the child executed this code
       if (i == 0){
-        printf(1, "\nThis is child with PID# %d and I will exit with status %d\n", getpid(), 21);
-        exit(21);
+        printf(1, "\nThis is child with PID# %d and I will exit with status %d\n", getpid(), 0);
+        exit(0);
       }
       else{
-	      printf(1, "\nThis is child with PID# %d and I will exit with status %d\n" ,getpid(), 22);
-        exit(22);
+	      printf(1, "\nThis is child with PID# %d and I will exit with status %d\n" ,getpid(), -1);
+        exit(-1);
       } 
     } else if (pid > 0) { // only the parent executes this code
       ret_pid = wait(&exit_status);
